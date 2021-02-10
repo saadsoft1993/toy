@@ -16,7 +16,6 @@ class Article(models.Model):
     content = models.TextField()
     status = models.PositiveSmallIntegerField(
         choices=STATUS,
-        default=REJECT,
         null=True,
         blank=True
     )
