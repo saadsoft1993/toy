@@ -16,7 +16,9 @@ class Article(models.Model):
     content = models.TextField()
     status = models.PositiveSmallIntegerField(
         choices=STATUS,
-        default=APPROVE,
+        default=REJECT,
+        null=True,
+        blank=True
     )
 
     # Foreign Keys

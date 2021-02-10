@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from article.models import Article
 from writer.models import Writer
@@ -25,12 +24,25 @@ class CreateArticleSerializer(serializers.ModelSerializer):
             return request.user.id
 
 
+class ArticleListSerializer(serializers.ModelSerializer):
+    written_by = serializers.SerializerMethodField('_user')
+
+    class Meta:
+        model = Article
+        fields = ['id', 'title', 'content', 'written_by', 'status']
+
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            return request.user.id
+
+
 class UpdateArticleSerializer(serializers.ModelSerializer):
     edited_by = serializers.SerializerMethodField('_user')
 
     class Meta:
         model = Article
-        fields = ['id', 'title', 'content', 'edited_by']
+        fields = ['id', 'title', 'content', 'edited_by', 'status']
 
     def _user(self, obj):
         request = self.context.get('request', None)
@@ -63,3 +75,11 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
+        data.update({'is_editor': self.user.is_editor})
+        data.update({'id': self.user.id})
+        return data

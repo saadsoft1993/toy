@@ -4,7 +4,7 @@ from article.api.viewsets import ArticleViewSet, WriterListViewSet
 
 router = DefaultRouter()
 router.register("article", ArticleViewSet, basename='article')
-router.register("writer", WriterListViewSet, basename='writer')
+router.register("summary", WriterListViewSet, basename='writer')
 
 
 urlpatterns = [
