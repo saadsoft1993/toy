@@ -20,7 +20,7 @@ class Article(models.Model):
     )
 
     # Foreign Keys
-    written_by = models.ForeignKey('writer.Writer', on_delete=models.CASCADE, related_name="writer")
-    edited_by = models.ForeignKey('writer.Writer', on_delete=models.CASCADE, related_name="editor")
+    written_by = models.ForeignKey('writer.Writer', on_delete=models.CASCADE, related_name="writer" , null=True, blank=True)
+    edited_by = models.ForeignKey('writer.Writer', on_delete=models.CASCADE, related_name="editor" , null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
