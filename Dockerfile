@@ -1,13 +1,19 @@
-FROM python:3.7-alpine
+FROM ubuntu:bionic
 
 ENV PYTHONUNBUFFERED 1
-COPY ./requirements.txt /requirements.txt
-RUN apk add --update --no-cache postgresql-client jpeg-dev
-RUN apk add --update --no-cache --virtual .tmp-build-deps \
-    gcc libc-dev linux-headers postgresql-dev musl-dev zlib zlib-dev
-RUN pip install -r /requirements.txt
-RUN apk del .tmp-build-deps
 
-#RUN mkdir /Toy
-COPY ./ /
-#WORKDIR /Toy
+RUN apt-get update \
+  && apt-get install -y python3.7-dev python3-pip libpq-dev curl \
+  && apt-get clean all \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV LANG en_US.utf8
+
+WORKDIR /home/Toy
+
+COPY ./requirements.txt ./
+RUN pip3 install -r requirements.txt
+RUN pip3 install psycopg2-binary
+RUN pip3 install psycopg2
+COPY ./ ./
+
