@@ -1,19 +1,24 @@
-from django.utils import timezone
-from rest_framework import viewsets, mixins, status, permissions
+from datetime import datetime, timedelta
+from rest_framework import mixins, status, permissions, viewsets
 from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from article.api.serializer import ArticleSerializer, CreateArticleSerializer, UpdateArticleSerializer, \
-    WriterSerializer, UserSerializer
+from article.api.serializer import CreateArticleSerializer, UpdateArticleSerializer, \
+    WriterSerializer, UserSerializer, CustomTokenObtainPairSerializer, ArticleListSerializer
 from article.models import Article
 from writer.models import Writer
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Q
 
 
-class ArticleViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, GenericViewSet):
-    serializer_class = CreateArticleSerializer
+class ArticleViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, GenericViewSet):
+    serializer_class = ArticleListSerializer
     queryset = Article.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         serializer = CreateArticleSerializer(data=request.data, context={'request': request})
@@ -34,10 +39,9 @@ class ArticleViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, GenericVi
 
 
 class CreateUserView(CreateAPIView):
-
     model = Writer
     permission_classes = [
-        permissions.AllowAny # Or anon users can't register
+        permissions.AllowAny  # Or anon users can't register
     ]
     serializer_class = UserSerializer
 
@@ -45,9 +49,14 @@ class CreateUserView(CreateAPIView):
 class WriterListViewSet(mixins.ListModelMixin, GenericViewSet):
     serializer_class = WriterSerializer
     queryset = Writer.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        return Writer.objects.all().prefetch_related('writer').annotate(last_30_days=Count('writer__pk'))
+        date = datetime.now() - timedelta(days=30)
+        return Writer.objects.all().prefetch_related('writer').annotate(
+            last_30_days=Count('writer', filter=Q(writer__created_at__gte=date)))
 
 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    # Replace the serializer with your custom
+    serializer_class = CustomTokenObtainPairSerializer
