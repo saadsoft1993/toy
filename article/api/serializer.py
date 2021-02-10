@@ -53,3 +53,13 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'username', 'password', 'is_editor']
         read_only_fields = ('id',)
 
+    def create(self, validated_data):
+        user = Writer.objects.create(
+            username=validated_data['username'],
+            name=validated_data['name'],
+            is_editor=validated_data['is_editor']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+
+        return user

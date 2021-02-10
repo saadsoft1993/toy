@@ -1,19 +1,21 @@
-from django.utils import timezone
-from rest_framework import viewsets, mixins, status, permissions
+from datetime import datetime, timedelta
+from rest_framework import mixins, status, permissions
 from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from article.api.serializer import ArticleSerializer, CreateArticleSerializer, UpdateArticleSerializer, \
+from article.api.serializer import CreateArticleSerializer, UpdateArticleSerializer, \
     WriterSerializer, UserSerializer
 from article.models import Article
 from writer.models import Writer
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Q
 
 
 class ArticleViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, GenericViewSet):
     serializer_class = CreateArticleSerializer
     queryset = Article.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         serializer = CreateArticleSerializer(data=request.data, context={'request': request})
@@ -45,9 +47,10 @@ class CreateUserView(CreateAPIView):
 class WriterListViewSet(mixins.ListModelMixin, GenericViewSet):
     serializer_class = WriterSerializer
     queryset = Writer.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        return Writer.objects.all().prefetch_related('writer').annotate(last_30_days=Count('writer__pk'))
+        date = datetime.now() - timedelta(days=30)
+        return Writer.objects.all().prefetch_related('writer').annotate(last_30_days=Count('writer', filter=Q(writer__created_at__gte=date)))
 
 
